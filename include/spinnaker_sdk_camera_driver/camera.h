@@ -45,7 +45,7 @@ namespace acquisition {
         void setResolutionPixels(int width, int height);
         void setBufferSize(int numBuf);
         void adcBitDepth(gcstring bitDep);
-
+        void setStreamBufferCountMode(string);
         // void set_acquisition_mode_continuous();
         // void set_frame_rate(float);
         // void set_horizontal_binning(int);

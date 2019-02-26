@@ -196,6 +196,7 @@ void acquisition::Capture::load_cameras() {
         }
         if (!current_cam_found) ROS_WARN_STREAM("   Camera "<<cam_ids_[j]<<" not detected!!!");
     }
+    numCameras_ = cams.size();
     ROS_ASSERT_MSG(cams.size(),"None of the connected cameras are in the config list!");
     ROS_ASSERT_MSG(master_set,"The camera supposed to be the master isn't connected!");
 }
@@ -478,64 +479,66 @@ void acquisition::Capture::init_cameras(bool soft = false) {
     ROS_INFO_STREAM("Initializing cameras...");
     
     // Set cameras 1 to 4 to continuous
-    for (int i = numCameras_-1 ; i >=0 ; i--) {
+    for (int i = cams.size()-1 ; i >=0 ; i--) {
                                 
         ROS_DEBUG_STREAM("Initializing camera " << cam_ids_[i] << "...");
 
         try {
             
             cams[i].init();
-
+            cams[i].setStreamBufferCountMode("Manual");
+            
             if (!soft) {
-
+                
                 cams[i].set_color(color_);
-                cams[i].setIntValue("BinningHorizontal", binning_);
-                cams[i].setIntValue("BinningVertical", binning_);
-
-                cams[i].setEnumValue("ExposureMode", "Timed");
-                if (exposure_time_ > 0) { 
-                    cams[i].setEnumValue("ExposureAuto", "Off");
-                    cams[i].setFloatValue("ExposureTime", exposure_time_);
-                } else {
-                    cams[i].setEnumValue("ExposureAuto", "Continuous");
-                }
                 
                 // cams[i].setIntValue("DecimationHorizontal", decimation_);
                 // cams[i].setIntValue("DecimationVertical", decimation_);
                 // cams[i].setFloatValue("AcquisitionFrameRate", 5.0);
 
                 if (color_)
-                    cams[i].setEnumValue("PixelFormat", "BGR8");
-                    else
-                        cams[i].setEnumValue("PixelFormat", "Mono8");
+                    cams[i].setEnumValue("PixelFormat", "RGB8");
+                else
+                    cams[i].setEnumValue("PixelFormat", "Mono8");
                 cams[i].setEnumValue("AcquisitionMode", "Continuous");
                 
                 // set only master to be software triggered
-                if (cams[i].is_master()) { 
+                if (cams[i].is_master()) {
+                    
+                    if (exposure_time_ > 0) {
+                        cams[i].setEnumValue("ExposureAuto", "Off");
+                        cams[i].setFloatValue("ExposureTime", exposure_time_);
+                    } else {
+                        cams[i].setEnumValue("ExposureAuto", "Continuous");
+                    }
+                    
+                    cams[i].setEnumValue("ExposureMode", "Timed");
+                    cams[i].setEnumValue("LineSelector", "Line1");
+                    cams[i].setEnumValue("LineMode", "Output");
+                    cams[i].setEnumValue("LineSource", "ExposureActive");
+                    
                     if (MAX_RATE_SAVE_){
-                      cams[i].setEnumValue("LineSelector", "Line2");
-                      cams[i].setEnumValue("LineMode", "Output");
-                      cams[i].setBoolValue("AcquisitionFrameRateEnable", false);
-                      //cams[i].setFloatValue("AcquisitionFrameRate", 170);
+                      cams[i].setEnumValue("AcquisitionFrameRateAuto", "Off");
+                      cams[i].setBoolValue("AcquisitionFrameRateEnabled", true);
+                      cams[i].setEnumValue("TriggerMode", "Off");
+                      cams[i].setFloatValue("AcquisitionFrameRate", master_fps_);
                     }else{
                       cams[i].setEnumValue("TriggerMode", "On");
-                      cams[i].setEnumValue("LineSelector", "Line2");
-                      cams[i].setEnumValue("LineMode", "Output");
                       cams[i].setEnumValue("TriggerSource", "Software");
                     }
-                    //cams[i].setEnumValue("LineSource", "ExposureActive");
 
 
                 } else {
                     cams[i].setEnumValue("TriggerMode", "On");
-                    cams[i].setEnumValue("LineSelector", "Line3");
-                    cams[i].setEnumValue("TriggerSource", "Line3");
-                    cams[i].setEnumValue("TriggerSelector", "FrameStart");
-                    cams[i].setEnumValue("LineMode", "Input");
+                    cams[i].setEnumValue("TriggerSource", "Line0");
+                    //cams[i].setEnumValue("ExposureAuto", "Off");
+                    cams[i].setEnumValue("ExposureMode", "TriggerWidth");
                     
-//                    cams[i].setFloatValue("TriggerDelay", 40.0);
-                    cams[i].setEnumValue("TriggerOverlap", "ReadOut");//"Off"
-                    cams[i].setEnumValue("TriggerActivation", "RisingEdge");
+                    //cams[i].setEnumValue("LineSelector", "Line0");
+                    //cams[i].setEnumValue("LineMode", "Input");
+                    //cams[i].setFloatValue("TriggerDelay", 40.0);
+                    //cams[i].setEnumValue("TriggerOverlap", "ReadOut");//"Off"
+                    //cams[i].setEnumValue("TriggerActivation", "RisingEdge");
                 }
             }
         }
@@ -543,8 +546,6 @@ void acquisition::Capture::init_cameras(bool soft = false) {
         catch (Spinnaker::Exception &e) {
             string error_msg = e.what();
             ROS_FATAL_STREAM("Error: " << error_msg);
-            if (error_msg.find("Unable to set PixelFormat to BGR8") >= 0)
-              ROS_WARN("Most likely cause for this error is if your camera can't support color and your are trying to set it to color mode");
             ros::shutdown();
         }
 
@@ -554,17 +555,17 @@ void acquisition::Capture::init_cameras(bool soft = false) {
 
 void acquisition::Capture::start_acquisition() {
 
-    for (int i = numCameras_-1; i>=0; i--)
+    for (int i = cams.size()-1; i>=0; i--)
         cams[i].begin_acquisition();
 
-    // for (int i=0; i<numCameras_; i++)
+    // for (int i=0; i<cams.size(); i++)
     //     cams[i].begin_acquisition();
     
 }
 
 void acquisition::Capture::end_acquisition() {
 
-    for (int i = 0; i < numCameras_; i++)
+    for (int i = 0; i < cams.size(); i++)
         cams[i].end_acquisition();
     
 }
@@ -575,7 +576,7 @@ void acquisition::Capture::deinit_cameras() {
 
     // end_acquisition();
     
-    for (int i = numCameras_-1 ; i >=0 ; i--) {
+    for (int i = cams.size()-1 ; i >=0 ; i--) {
 
         ROS_DEBUG_STREAM("Camera "<<i<<": Deinit...");
         cams[i].deinit();
@@ -589,7 +590,7 @@ void acquisition::Capture::create_cam_directories() {
 
     ROS_DEBUG_STREAM("Creating camera directories...");
     
-    for (int i=0; i<numCameras_; i++) {
+    for (int i=0; i<cams.size(); i++) {
         ostringstream ss;
         ss<<path_<<cam_names_[i];
         if (mkdir(ss.str().c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) < 0) {
@@ -609,7 +610,7 @@ void acquisition::Capture::save_mat_frames(int dump) {
         create_cam_directories();
     
     string timestamp;
-    for (unsigned int i = 0; i < numCameras_; i++) {
+    for (unsigned int i = 0; i < cams.size(); i++) {
 
         if (dump) {
             
@@ -643,11 +644,11 @@ void acquisition::Capture::export_to_ROS() {
     std_msgs::Header img_msg_header;
     img_msg_header.stamp = mesg.header.stamp;
 
-    for (unsigned int i = 0; i < numCameras_; i++) {
+    for (unsigned int i = 0; i < cams.size(); i++) {
         img_msg_header.frame_id = "cam_"+to_string(i)+"_optical_frame";
 
         if(color_)
-            img_msgs[i]=cv_bridge::CvImage(img_msg_header, "bgr8", frames_[i]).toImageMsg();
+            img_msgs[i]=cv_bridge::CvImage(img_msg_header, "rgb8", frames_[i]).toImageMsg();
             else
                 img_msgs[i]=cv_bridge::CvImage(img_msg_header, "mono8", frames_[i]).toImageMsg();
 
@@ -669,7 +670,7 @@ void acquisition::Capture::save_binary_frames(int dump) {
         create_cam_directories();
     
     string timestamp;
-    for (unsigned int i = 0; i < numCameras_; i++) {
+    for (unsigned int i = 0; i < cams.size(); i++) {
 
         if (dump) {
             //imwrite(dump_img_.c_str(), frames_[i]);
@@ -711,7 +712,7 @@ void acquisition::Capture::get_mat_images() {
     int fid_mismatch = 0;
    
 
-    for (int i=0; i<numCameras_; i++) {
+    for (int i=0; i<cams.size(); i++) {
 
         frames_[i] = cams[i].grab_mat_frame();
 
@@ -724,7 +725,7 @@ void acquisition::Capture::get_mat_images() {
             if (cams[i].get_frame_id() != frameID)
                 fid_mismatch = 1;
         
-        if (i == numCameras_-1)
+        if (i == cams.size()-1)
             ss << cams[i].get_frame_id() << "]";
         else
             ss << cams[i].get_frame_id() << ", ";
@@ -787,7 +788,7 @@ void acquisition::Capture::run_soft_trig() {
             if ( (key & 255)!=255 ) {
 
                 if ( (key & 255)==83 ) {
-                    if (CAM_<numCameras_-1) // RIGHT ARROW
+                    if (CAM_<cams.size()-1) // RIGHT ARROW
                         CAM_++;
                 } else if( (key & 255)==81 ) { // LEFT ARROW
                     if (CAM_>0)
@@ -968,7 +969,7 @@ void acquisition::Capture::acquire_images_to_queue(vector<queue<ImagePtr>>*  img
 
     for (int imageCnt = 0; imageCnt < k_numImages; imageCnt++) {
         uint64_t timeStamp = 0;
-        for (int i = 0; i < numCameras_; i++) {
+        for (int i = 0; i < cams.size(); i++) {
             try {
                 ImagePtr pResultImage = cams[i].grab_frame();
 
@@ -1027,14 +1028,14 @@ void acquisition::Capture::run_mt() {
 
     vector<std::queue<ImagePtr>> image_queue_vector;
 
-    for (int i=0; i<numCameras_; i++) {
+    for (int i=0; i<cams.size(); i++) {
         std::queue<ImagePtr> img_ptr_queue;
         image_queue_vector.push_back(img_ptr_queue);
     }
 
     threads.create_thread(boost::bind(&Capture::acquire_images_to_queue, this, &image_queue_vector));
 
-    for (int i=0; i<numCameras_; i++)
+    for (int i=0; i<cams.size(); i++)
         threads.create_thread(boost::bind(&Capture::write_queue_to_disk, this, &image_queue_vector.at(i), i));
 
     ROS_DEBUG("Joining all threads");

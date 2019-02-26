@@ -93,7 +93,7 @@ Mat acquisition::Camera::convert_to_mat(ImagePtr pImage) {
 
     ImagePtr convertedImage;
     if (COLOR_)
-        convertedImage = pImage->Convert(PixelFormat_BGR8); //, NEAREST_NEIGHBOR);
+        convertedImage = pImage->Convert(PixelFormat_RGB8); //, NEAREST_NEIGHBOR);
     else
 		convertedImage = pImage->Convert(PixelFormat_Mono8); //, NEAREST_NEIGHBOR);
 		
@@ -239,10 +239,36 @@ void acquisition::Camera::adcBitDepth(gcstring bitDep) {
 
 }
 
-void acquisition::Camera::setBufferSize(int numBuf) {
+void acquisition::Camera::setStreamBufferCountMode(string value){
+     // Retrieve Stream Parameters device nodemap 
+    Spinnaker::GenApi::INodeMap & sNodeMap = pCam_->GetTLStreamNodeMap();
 
+        // Set stream buffer Count
+        CEnumerationPtr ptrStreamBufferCountMode = sNodeMap.GetNode("StreamBufferCountMode");
+        if (!IsAvailable(ptrStreamBufferCountMode) || !IsWritable(ptrStreamBufferCountMode))
+        {
+            ROS_FATAL_STREAM("Unable to set Buffer Count Mode (node retrieval). Aborting..." );
+            return ;
+        }
+
+        CEnumEntryPtr ptrStreamBufferCountModeValue = ptrStreamBufferCountMode->GetEntryByName(value.c_str());
+        if (!IsAvailable(ptrStreamBufferCountModeValue) || !IsReadable(ptrStreamBufferCountModeValue))
+        {
+            ROS_FATAL_STREAM("Unable to set Buffer Count Mode entry (Entry retrieval). Aborting..." );
+            return ;
+        }
+
+        ptrStreamBufferCountMode->SetIntValue(ptrStreamBufferCountModeValue->GetValue());
+
+        ROS_DEBUG_STREAM( "Stream Buffer Count Mode set to" << value<<"..." );
+}
+
+void acquisition::Camera::setBufferSize(int numBuf) {
+    
+    this->setStreamBufferCountMode("Manual");
+    
     INodeMap & sNodeMap = pCam_->GetTLStreamNodeMap();
-    CIntegerPtr StreamNode = sNodeMap.GetNode("StreamDefaultBufferCount");
+    CIntegerPtr StreamNode = sNodeMap.GetNode("StreamBufferCountManual");
     int64_t bufferCount = StreamNode->GetValue();
     if (!IsAvailable(StreamNode) || !IsWritable(StreamNode)){
         ROS_FATAL_STREAM("Unable to set StreamMode " << "). Aborting...");
