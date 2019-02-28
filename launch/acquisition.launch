@@ -6,6 +6,7 @@
   <arg name="binning"		default="0"	doc="Binning for cameras, when changing from 2 to 1 cameras need to be unplugged and replugged"/>
   <arg name="color"		default="true"	doc="Should color images be used (only works on models that support color images)"/>
   <arg name="exp"               default="0"	doc="Exposure setting for cameras"/>
+  <arg name="delay"             default="500"	doc="Delay to wait for camera settings to work..."/>
   <arg name="frames"            default="0"	doc="Numer of frames to save/view 0=ON"/>
   <arg name="live"              default="false"	doc="Show images on screen GUI"/>
   <arg name="live_grid"         default="false"	doc="Show images on screen GUI in a grid"/>
@@ -18,7 +19,7 @@
   <arg name="to_ros"            default="true"	doc="Flag whether images should be published to ROS" />
   <arg name="utstamps"          default="false"	doc="Flag whether each image should have Unique timestamps vs the master cams time stamp for all" />
   <arg name="max_rate_save"     default="false"	doc="Flag for max rate mode which is when the master triggerst the slaves and saves images at maximum rate possible" />
-  <arg name="config_file"       default="$(find spinnaker_sdk_camera_driver)/params/test_params.yaml" doc="File specifying the parameters of the camera_array"/>
+  <arg name="config_file"       default="$(find spinnaker_sdk_camera_driver)/params/dev_params.yaml" doc="File specifying the parameters of the camera_array"/>
 
   <!-- load the acquisition node -->
   <node pkg="spinnaker_sdk_camera_driver" 

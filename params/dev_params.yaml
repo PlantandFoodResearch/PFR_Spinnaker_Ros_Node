@@ -1,11 +1,12 @@
 cam_ids:
 - 17581531
+- 17581532
 cam_aliases:
 - cam0
+- cam1
 master_cam: 17581531
 skip: 20
 delay: 0
-
 # Assign all the follwing via launch file to prevent confusion and conflict
 
 #save_path: ~/projects/data
@@ -17,3 +18,25 @@ delay: 0
 #exp: 997
 #to_ros: true  #When to_ros is not selected, but live is selected, pressing 'space' exports single image to ROS
 #live: true
+
+distortion_model: plumb_bob
+image_height: 1200
+image_width: 1920
+distortion_coeffs:
+- [-0.14910461, 0.0869686,  -0.00019858,  0.00067671, -0.01881396]
+- [-0.14741230, 0.08496432,  0.00051191,  0.0004451,  -0.01738845]
+
+#specified as [fx  0 cx 0 fy cy 0  0  1]
+intrinsic_coeffs:
+- [1070.32910, 0.000, 951.378754, 0.000, 1069.30766, 605.531179, 0.000, 0.000, 1.000]
+- [1068.94849, 0.000, 964.249429, 0.000, 1068.35055, 591.241858, 0.000, 0.000, 1.000]
+
+#identity if not using stereo cameras
+rectification_coeffs:
+- [1.000000, 0.000000, 0.000000, 0.000000, 1.000000, 0.000000, 0.000000, 0.000000, 1.000000]
+- [1.000000, 0.000000, 0.000000, 0.000000, 1.000000, 0.000000, 0.000000, 0.000000, 1.000000]
+
+#provided by getOptimalNewCameraMatrix()
+projection_coeffs:
+- [ 974.88830566,  0.000, 953.53447652,  0.000,  972.88909912,  605.15781719,  0.000,  0.000,  1.000]
+- [ 975.51446533,  0.000, 965.99121301,  0.000,  974.43017578,  592.32731876,  0.000,  0.000,  1.000]

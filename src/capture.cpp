@@ -76,7 +76,7 @@ acquisition::Capture::Capture():nh_(),nh_pvt_ ("~") {
     FIXED_NUM_FRAMES_ = false;
     MAX_RATE_SAVE_ = false;
     skip_num_ = 20; 
-    init_delay_ = 1; 
+    init_delay_ = 500; 
     master_fps_ = 20.0;
     binning_ = 1;
     todays_date_ = todays_date();
@@ -469,7 +469,7 @@ void acquisition::Capture::init_array() {
     sleep(init_delay_*2.0);
 
     init_cameras(false);
-
+    sleep(init_delay_*2.0);
     ROS_DEBUG_STREAM("Flush sequence done.");
 
 }
@@ -480,28 +480,26 @@ void acquisition::Capture::init_cameras(bool soft = false) {
     
     // Set cameras 1 to 4 to continuous
     for (int i = cams.size()-1 ; i >=0 ; i--) {
-                                
         ROS_DEBUG_STREAM("Initializing camera " << cam_ids_[i] << "...");
-
         try {
             
             cams[i].init();
+            //cams[i].setEnumValue("UserSetSelector","UserSet1");
+            //cams[i].setEnumValue("UserSetLoad","execute");
+            
             cams[i].setStreamBufferCountMode("Manual");
             
             if (!soft) {
                 
                 cams[i].set_color(color_);
                 
-                // cams[i].setIntValue("DecimationHorizontal", decimation_);
-                // cams[i].setIntValue("DecimationVertical", decimation_);
-                // cams[i].setFloatValue("AcquisitionFrameRate", 5.0);
-
                 if (color_)
                     cams[i].setEnumValue("PixelFormat", "RGB8");
                 else
                     cams[i].setEnumValue("PixelFormat", "Mono8");
                 cams[i].setEnumValue("AcquisitionMode", "Continuous");
-                
+                cams[i].setEnumValue("GainAuto", "Off");
+                cams[i].setFloatValue("Gain", 29.996);
                 // set only master to be software triggered
                 if (cams[i].is_master()) {
                     
@@ -518,27 +516,31 @@ void acquisition::Capture::init_cameras(bool soft = false) {
                     cams[i].setEnumValue("LineSource", "ExposureActive");
                     
                     if (MAX_RATE_SAVE_){
+                        //In this mode you have to specify the number of 
+                        //frames you want and they are all saved into folders
+                        //so we don't really need it
                       cams[i].setEnumValue("AcquisitionFrameRateAuto", "Off");
                       cams[i].setBoolValue("AcquisitionFrameRateEnabled", true);
                       cams[i].setEnumValue("TriggerMode", "Off");
                       cams[i].setFloatValue("AcquisitionFrameRate", master_fps_);
                     }else{
-                      cams[i].setEnumValue("TriggerMode", "On");
+                      //must turn off trigger mode to select the source
+                      //cams[i].setEnumValue("TriggerMode", "Off");
+                      //software source means the computer controls the frame rate
+                      //I don't know if that is optimal, but it should work for now.
                       cams[i].setEnumValue("TriggerSource", "Software");
+                      cams[i].setEnumValue("TriggerMode", "On");
                     }
 
 
                 } else {
-                    cams[i].setEnumValue("TriggerMode", "On");
+                    //must turn off trigger mode to select the source
+                    //cams[i].setEnumValue("TriggerMode", "Off");
                     cams[i].setEnumValue("TriggerSource", "Line0");
-                    //cams[i].setEnumValue("ExposureAuto", "Off");
-                    cams[i].setEnumValue("ExposureMode", "TriggerWidth");
+                    cams[i].setEnumValue("TriggerMode", "On");
                     
-                    //cams[i].setEnumValue("LineSelector", "Line0");
-                    //cams[i].setEnumValue("LineMode", "Input");
-                    //cams[i].setFloatValue("TriggerDelay", 40.0);
-                    //cams[i].setEnumValue("TriggerOverlap", "ReadOut");//"Off"
-                    //cams[i].setEnumValue("TriggerActivation", "RisingEdge");
+                    cams[i].setEnumValue("ExposureMode", "TriggerWidth");
+                
                 }
             }
         }
