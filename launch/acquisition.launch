@@ -5,7 +5,7 @@
   <!-- acquisition.lauynch -->
   <arg name="binning"		default="0"	doc="Binning for cameras, when changing from 2 to 1 cameras need to be unplugged and replugged"/>
   <arg name="color"		default="true"	doc="Should color images be used (only works on models that support color images)"/>
-  <arg name="exp"               default="0"	doc="Exposure setting for cameras"/>
+  <arg name="exp"               default="2000"	doc="Exposure setting for cameras"/>
   <arg name="delay"             default="500"	doc="Delay to wait for camera settings to work..."/>
   <arg name="frames"            default="0"	doc="Numer of frames to save/view 0=ON"/>
   <arg name="live"              default="false"	doc="Show images on screen GUI"/>
