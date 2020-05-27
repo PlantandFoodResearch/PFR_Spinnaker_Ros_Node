@@ -8,7 +8,7 @@ set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 ###
 # camera Acquisition specific 
 ###
-#SET("OpenCV_DIR" "~/apps/opencv-2.4.13/")
+SET("OpenCV_DIR" "~/Workspace/opencv-3.2.0/build")
 set(PROJECT_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/include" CACHE PATH "Project Include Directory")
 set(SPINNAKER_INCLUDE_DIR "/usr/include/spinnaker" CACHE PATH "Spinnaker Include Directory")
 set(SPINNAKER_LIB_DIR "/usr/lib" CACHE PATH "Spinnaker Libs Directory")
@@ -30,7 +30,7 @@ find_package(catkin REQUIRED COMPONENTS
 # Acquisition specific
 ###
 # Find Packages
-find_package(OpenCV REQUIRED)
+find_package(OpenCV 3 REQUIRED)
 find_package(LibUnwind REQUIRED)
 
 find_package(Boost REQUIRED)
