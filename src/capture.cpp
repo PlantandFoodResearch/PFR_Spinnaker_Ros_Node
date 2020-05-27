@@ -169,7 +169,7 @@ void acquisition::Capture::load_cameras() {
                     nh_pvt_.getParam("image_width", image_width);
                     nh_pvt_.getParam("distortion_model", distortion_model);
 
-                    ci_msg.header.frame_id = "cam_"+to_string(j)+"_optical_frame";
+                    ci_msg.header.frame_id = cam_names_[j]+"_optical";
                     ci_msg.width = image_width;
                     ci_msg.height = image_height;
                     ci_msg.distortion_model = distortion_model;
@@ -751,7 +751,7 @@ void acquisition::Capture::run_soft_trig() {
 
     // Camera directories created at first save
     
-    if (LIVE_)namedWindow("Acquisition", CV_WINDOW_NORMAL | CV_WINDOW_KEEPRATIO);
+    //if (LIVE_)namedWindow("Acquisition", CV_WINDOW_NORMAL | CV_WINDOW_KEEPRATIO);
 
     int count = 0;
     
@@ -772,7 +772,7 @@ void acquisition::Capture::run_soft_trig() {
 
             double t = ros::Time::now().toSec();
 
-            if (LIVE_) {
+            /*if (LIVE_) {
                 if (GRID_VIEW_) {
                     update_grid();
                     imshow("Acquisition", grid_);
@@ -816,7 +816,7 @@ void acquisition::Capture::run_soft_trig() {
                     break;
                 }
                 ROS_DEBUG_STREAM("active cam switched to: "<<CAM_);
-            }
+            }*/
 
             double disp_time_ = ros::Time::now().toSec() - t;
             
@@ -838,7 +838,7 @@ void acquisition::Capture::run_soft_trig() {
                 cout<<"Nframes "<< nframes_<<endl;
                 if (count > nframes_) {
                     ROS_INFO_STREAM(nframes_ << " frames recorded. Terminating...");
-                    cvDestroyAllWindows();
+                    //cvDestroyAllWindows();
                     break;
                 }
             }
